@@ -1,56 +1,72 @@
-# Welcome to your Expo app 👋
+# Legacy — Family Platform (React Native / Expo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A digital family home: an interactive family tree, member profiles, and an AI
+family assistant. Built with Expo (SDK 57), TypeScript, and expo-router.
 
-## Get started
+> **Runs with zero backend setup.** Until Supabase credentials are provided, the
+> app uses a seed family and a local, graph-driven AI. Add credentials to switch
+> to the real backend — no code changes needed.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick start
 
 ```bash
-npm run reset-project
+npm install
+npm run ios      # or: npm run android / npm run web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Phase 1 (MVP) — what's implemented
 
-### Other setup steps
+- **Auth flow**: welcome → phone → OTP → profile setup (simulated OTP in demo
+  mode; real Supabase phone OTP when configured).
+- **Bottom tabs**: Family (tree home), Money, Alerts, Messages, Market, Settings.
+  Money & Market are polished "Coming Soon" states per the MVP scope.
+- **Family Tree home**: interactive 2D tree with pinch-zoom, pan, and double-tap
+  reset; profile + AI icons in the header; add-member FAB.
+- **Member profiles**: My Profile vs. other members, auto-computed relationship
+  label, and profession shown only for people 18+.
+- **Add / edit members** and relationships (parent / child / spouse / sibling).
+- **AI assistant**: chat over the family graph (who's related to whom, who lives
+  where, who shares a profession). Never invents — says when data is missing.
+- **i18n**: English / Русский / O‘zbekcha. English is the default on first launch;
+  the choice persists locally.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Architecture
 
-## Learn more
+```
+src/
+  app/            expo-router routes: (auth), (tabs), family/, ai/
+  components/ui/  themed primitives (Text, Button, Card, Avatar, Icon, …)
+  components/family/  tree node
+  features/       familyTree (layout + canvas), familyMembers (form)
+  services/       api (supabase, config, repo, mock), ai (assistant)
+  hooks/          use-family, use-app-theme
+  store/          auth (zustand + SecureStore)
+  i18n/           i18next + en/ru/uz locales
+  theme/          design tokens (colors, spacing, radius, shadows, motion)
+  types/          domain models
+  utils/          relationship inference, ids
+supabase/         schema.sql (tables + RLS), functions/ai-assistant (Edge Function)
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Kinship is a graph: `people` nodes + four primitive `relationships`
+(parent/child/spouse/sibling). Tree layout and "who is X to me?" are both derived
+(`src/utils/relationships.ts`).
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Connecting the backend
 
-## Join the community
+1. Create a Supabase project. Run `supabase/schema.sql` in the SQL editor.
+2. Copy `.env.example` → `.env` and set `EXPO_PUBLIC_SUPABASE_URL` and
+   `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+3. Deploy the AI function and set its secret:
+   ```bash
+   supabase functions deploy ai-assistant
+   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   ```
+   Set `EXPO_PUBLIC_AI_FUNCTION_URL` to the function URL.
 
-Join our community of developers creating universal apps.
+The Anthropic key stays server-side only. The app never contains secret keys.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Stack
+
+Expo · TypeScript · expo-router · TanStack Query · Zustand · React Hook Form ·
+Zod · Reanimated · Gesture Handler · react-native-svg · i18next · Supabase.
